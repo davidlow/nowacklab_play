@@ -1,0 +1,39 @@
+from PyQt5 import QtCore
+import threading
+import time
+import matplotlib.pyplot as plt
+
+class Call_in_QT_main_loop(QtCore.QObject):
+    signal = QtCore.pyqtSignal()
+
+    def __init__(self, func):
+        super().__init__()
+        self.func = func
+        self.args = list()
+        self.kwargs = dict()
+        self.signal.connect(self._target)
+
+    def _target(self):
+        self.func(*self.args, **self.kwargs)
+
+    def __call__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+        self.signal.emit()
+
+@Call_in_QT_main_loop
+def plot_a_graph():
+    f,a = plt.subplots(1)
+    line = plt.plot(range(10))
+    plt.show()
+    print("plotted graph")
+    print(threading.current_thread())  # print the thread that runs this code
+
+def worker():
+    plot_a_graph()
+    print(threading.current_thread())  # print the thread that runs this code
+    time.sleep(4)
+
+testthread = threading.Thread(target=worker)
+
+testthread.start()
